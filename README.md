@@ -6,26 +6,26 @@ Independent Android adaptation of [TypeWords](https://github.com/zyronon/TypeWor
 
 The latest stable Android APK and its complete corresponding GPL source archive are published in [GitHub Releases](https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/latest).
 
-### v1.9.3
+### v1.9.4
 
-- **Android APK:** [TypeWords-Android-v1.9.3.apk](https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/download/v1.9.3/TypeWords-Android-v1.9.3.apk)
-- **APK SHA-256:** [TypeWords-Android-v1.9.3.apk.sha256](https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/download/v1.9.3/TypeWords-Android-v1.9.3.apk.sha256)
-- **Complete corresponding GPL source:** [TypeWords-Android-v1.9.3-source.zip](https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/download/v1.9.3/TypeWords-Android-v1.9.3-source.zip)
-- **Source SHA-256:** [TypeWords-Android-v1.9.3-source.zip.sha256](https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/download/v1.9.3/TypeWords-Android-v1.9.3-source.zip.sha256)
+- **Android APK:** [TypeWords-Android-v1.9.4.apk](https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/download/v1.9.4/TypeWords-Android-v1.9.4.apk)
+- **APK SHA-256:** [TypeWords-Android-v1.9.4.apk.sha256](https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/download/v1.9.4/TypeWords-Android-v1.9.4.apk.sha256)
+- **Complete corresponding GPL source:** [TypeWords-Android-v1.9.4-source.zip](https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/download/v1.9.4/TypeWords-Android-v1.9.4-source.zip)
+- **Source SHA-256:** [TypeWords-Android-v1.9.4-source.zip.sha256](https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/download/v1.9.4/TypeWords-Android-v1.9.4-source.zip.sha256)
 
 Android package: `cc.typewords.android`  
-versionName: `1.9.3`  
-versionCode: `23`  
+versionName: `1.9.4`  
+versionCode: `24`  
 Minimum Android: 6.0
 
-APK SHA-256: `b89fa39175698022c2a0277b9843a0598859766c38e66c445080d68beb12c5b8`  
-Source ZIP SHA-256: `cec2bf75c501ebba74e88e2c17e2cc47abb132ae09d9df7ae214128e509b75fc`
+APK SHA-256: `e38f9b9d5f0423a9a92d4b9fb03c68b3df2fad95bf4e26c968719a1583bde1bd`  
+Source ZIP SHA-256: `4932e58285764a0819f42ec2af774d9e274f57c60feaaf0db2b28c60f7a2d91d`
 
 ### Release highlights
 
-- Preserves the FSRS-6 scheduler, existing review history, IndexedDB learning data and ZIP backup format.
-- Fixes FSRS settings changes not taking effect until the scheduler was recreated.
-- Hardens PWA offline caching: no API/auth/deep-navigation HTML caching, bounded 400-item static cache and offline shell fallback.
+- Preserves the FSRS-6 scheduler, existing review history, IndexedDB learning data and ZIP backup/restore format.
+- Adds an offline US IPA overlay for 14,382 bundled headwords, locale-aware phonetic display and optional phoneme / stress hints.
+- Hardens PWA offline caching: query-bearing root URLs are not cached, core app shell entries survive the 400-item cache cap, and online deep-link 404s fall back to the SPA shell.
 - Keeps the Android app as an independent adaptation; this is not an official upstream release.
 
 ## Upgrade safely
