@@ -16,21 +16,15 @@ jobs:
           DOWNLOAD_BASE: https://healthcare-involvement-understand-homes.trycloudflare.com
         run: |
           set -euo pipefail
-          curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 \
-            "$DOWNLOAD_BASE/download" -o TypeWords-Android-v1.9.3.apk
-          curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 \
-            "$DOWNLOAD_BASE/sha256" -o TypeWords-Android-v1.9.3.apk.sha256
-          curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 \
-            "$DOWNLOAD_BASE/source" -o TypeWords-Android-v1.9.3-source.zip
-          curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 \
-            "$DOWNLOAD_BASE/source-sha256" -o TypeWords-Android-v1.9.3-source.zip.sha256
-
+          curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 "$DOWNLOAD_BASE/download" -o TypeWords-Android-v1.9.3.apk
+          curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 "$DOWNLOAD_BASE/sha256" -o TypeWords-Android-v1.9.3.apk.sha256
+          curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 "$DOWNLOAD_BASE/source" -o TypeWords-Android-v1.9.3-source.zip
+          curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 "$DOWNLOAD_BASE/source-sha256" -o TypeWords-Android-v1.9.3-source.zip.sha256
           sha256sum --check TypeWords-Android-v1.9.3.apk.sha256
           sha256sum --check TypeWords-Android-v1.9.3-source.zip.sha256
           test "$(stat -c '%s' TypeWords-Android-v1.9.3.apk)" = "31493300"
           test "$(stat -c '%s' TypeWords-Android-v1.9.3-source.zip)" = "30912016"
           unzip -tq TypeWords-Android-v1.9.3-source.zip
-          file TypeWords-Android-v1.9.3.apk
 
       - name: Prepare release notes
         run: |
@@ -89,7 +83,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh release view v1.9.3 --repo "$GITHUB_REPOSITORY" --json url,tagName,isLatest,assets
+          gh release view v1.9.3 --repo "$GITHUB_REPOSITORY" --json url,tagName,assets
           for asset in \
             TypeWords-Android-v1.9.3.apk \
             TypeWords-Android-v1.9.3.apk.sha256 \
