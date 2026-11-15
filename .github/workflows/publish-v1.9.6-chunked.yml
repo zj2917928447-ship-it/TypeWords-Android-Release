@@ -1,0 +1,145 @@
+name: Publish TypeWords Android v1.9.6 (resumable chunks)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'release/v1.9.6-chunked-trigger.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout release metadata
+        uses: actions/checkout@v4
+
+      - name: Download exact APK and GPL source in verified byte ranges
+        env:
+          DOWNLOAD_BASE: https://probe-und-some-intellectual.trycloudflare.com
+        run: |
+          set -euo pipefail
+
+          curl --fail --location --retry 8 --retry-all-errors --retry-delay 2 "$DOWNLOAD_BASE/health" -o health.txt
+          grep -Fxq 'OK TypeWords 1.9.6' health.txt
+
+          download_ranges() {
+            local endpoint="$1"
+            local output="$2"
+            local total="$3"
+            local chunk=1048576
+            local start=0 end length attempt ok
+            local headers="$output.headers"
+            local part="$output.part"
+
+            : > "$output"
+            while (( start < total )); do
+              end=$((start + chunk - 1))
+              if (( end >= total )); then end=$((total - 1)); fi
+              length=$((end - start + 1))
+              ok=0
+
+              for attempt in 1 2 3 4 5 6 7; do
+                rm -f "$headers" "$part"
+                if curl --fail --silent --show-error --location --connect-timeout 15 --max-time 90 \
+                    --range "$start-$end" -D "$headers" -o "$part" "$DOWNLOAD_BASE$endpoint"; then
+                  if tr -d '\r' < "$headers" | grep -Fxiq "content-range: bytes $start-$end/$total" &&
+                     test "$(stat -c '%s' "$part")" = "$length"; then
+                    ok=1
+                    break
+                  fi
+                fi
+                echo "Retry $attempt for $endpoint bytes $start-$end" >&2
+                sleep "$attempt"
+              done
+
+              if (( ok != 1 )); then
+                echo "Failed to retrieve verified range $endpoint bytes $start-$end" >&2
+                exit 1
+              fi
+
+              cat "$part" >> "$output"
+              start=$((end + 1))
+              echo "$endpoint: $start/$total bytes ($(awk -v a="$start" -v b="$total" 'BEGIN {printf "%.1f",a*100/b}')%)"
+            done
+            rm -f "$headers" "$part"
+            test "$(stat -c '%s' "$output")" = "$total"
+          }
+
+          download_ranges /download TypeWords-Android-v1.9.6.apk 31609101
+          download_ranges /source TypeWords-Android-v1.9.6-source.zip 31951164
+
+          curl --fail --silent --show-error --location "$DOWNLOAD_BASE/sha256" -o TypeWords-Android-v1.9.6.apk.sha256
+          curl --fail --silent --show-error --location "$DOWNLOAD_BASE/source-sha256" -o TypeWords-Android-v1.9.6-source.zip.sha256
+
+          test "$(awk '{print $1}' TypeWords-Android-v1.9.6.apk.sha256)" = "e93302b2cd27083d043e128a039285ff2b76b2c8542f85575f90433ba50ac875"
+          test "$(awk '{print $1}' TypeWords-Android-v1.9.6-source.zip.sha256)" = "8726cc2a4f42f8bd30badf2f807e3d05adcc1022b832e2d4a9537016abe86215"
+          sha256sum --check TypeWords-Android-v1.9.6.apk.sha256
+          sha256sum --check TypeWords-Android-v1.9.6-source.zip.sha256
+          unzip -tq TypeWords-Android-v1.9.6-source.zip
+
+          head -c 4 TypeWords-Android-v1.9.6.apk | cmp - <(printf 'PK\003\004')
+          head -c 4 TypeWords-Android-v1.9.6-source.zip | cmp - <(printf 'PK\003\004')
+
+          cp TypeWords-Android-v1.9.6.apk TypeWords-Android.apk
+          cp TypeWords-Android-v1.9.6-source.zip TypeWords-Android-source.zip
+          printf '%s  %s\n' "$(awk '{print $1}' TypeWords-Android-v1.9.6.apk.sha256)" TypeWords-Android.apk > TypeWords-Android.apk.sha256
+          printf '%s  %s\n' "$(awk '{print $1}' TypeWords-Android-v1.9.6-source.zip.sha256)" TypeWords-Android-source.zip > TypeWords-Android-source.zip.sha256
+          sha256sum --check TypeWords-Android.apk.sha256
+          sha256sum --check TypeWords-Android-source.zip.sha256
+
+      - name: Refuse accidental release overwrite
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v1.9.6 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release v1.9.6 already exists; refusing to overwrite it."
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin refs/tags/v1.9.6 >/dev/null 2>&1; then
+            echo "Tag v1.9.6 already exists; refusing to overwrite it."
+            exit 1
+          fi
+
+      - name: Create public GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create v1.9.6 \
+            TypeWords-Android-v1.9.6.apk \
+            TypeWords-Android-v1.9.6.apk.sha256 \
+            TypeWords-Android.apk \
+            TypeWords-Android.apk.sha256 \
+            TypeWords-Android-v1.9.6-source.zip \
+            TypeWords-Android-v1.9.6-source.zip.sha256 \
+            TypeWords-Android-source.zip \
+            TypeWords-Android-source.zip.sha256 \
+            release/v1.9.6-install-guide.txt \
+            --repo "$GITHUB_REPOSITORY" \
+            --target main \
+            --title "TypeWords Android v1.9.6" \
+            --notes-file release/v1.9.6-notes.md \
+            --latest
+
+      - name: Download published assets and verify release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view v1.9.6 --repo "$GITHUB_REPOSITORY" --json url,tagName,assets
+          mkdir -p verified-release
+          gh release download v1.9.6 --repo "$GITHUB_REPOSITORY" --pattern 'TypeWords-Android-v1.9.6.apk' --dir verified-release
+          gh release download v1.9.6 --repo "$GITHUB_REPOSITORY" --pattern 'TypeWords-Android-v1.9.6.apk.sha256' --dir verified-release
+          gh release download v1.9.6 --repo "$GITHUB_REPOSITORY" --pattern 'TypeWords-Android-v1.9.6-source.zip' --dir verified-release
+          gh release download v1.9.6 --repo "$GITHUB_REPOSITORY" --pattern 'TypeWords-Android-v1.9.6-source.zip.sha256' --dir verified-release
+          (cd verified-release && sha256sum --check TypeWords-Android-v1.9.6.apk.sha256)
+          (cd verified-release && sha256sum --check TypeWords-Android-v1.9.6-source.zip.sha256)
+          test "$(stat -c '%s' verified-release/TypeWords-Android-v1.9.6.apk)" = "31609101"
+          test "$(stat -c '%s' verified-release/TypeWords-Android-v1.9.6-source.zip)" = "31951164"
+          echo "TYPEWORDS_ANDROID_V1_9_6_PUBLIC_RELEASE_VERIFIED"
