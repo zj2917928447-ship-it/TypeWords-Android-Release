@@ -1,0 +1,101 @@
+name: Publish TypeWords Android v1.9.3
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Download exact release artifacts
+        env:
+          DOWNLOAD_BASE: https://healthcare-involvement-understand-homes.trycloudflare.com
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 \
+            "$DOWNLOAD_BASE/download" -o TypeWords-Android-v1.9.3.apk
+          curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 \
+            "$DOWNLOAD_BASE/sha256" -o TypeWords-Android-v1.9.3.apk.sha256
+          curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 \
+            "$DOWNLOAD_BASE/source" -o TypeWords-Android-v1.9.3-source.zip
+          curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 \
+            "$DOWNLOAD_BASE/source-sha256" -o TypeWords-Android-v1.9.3-source.zip.sha256
+
+          sha256sum --check TypeWords-Android-v1.9.3.apk.sha256
+          sha256sum --check TypeWords-Android-v1.9.3-source.zip.sha256
+          test "$(stat -c '%s' TypeWords-Android-v1.9.3.apk)" = "31493300"
+          test "$(stat -c '%s' TypeWords-Android-v1.9.3-source.zip)" = "30912016"
+          unzip -tq TypeWords-Android-v1.9.3-source.zip
+          file TypeWords-Android-v1.9.3.apk
+
+      - name: Prepare release notes
+        run: |
+          cat > release-notes.md <<'EOF'
+          TypeWords Android v1.9.3
+
+          Independent Android adaptation of TypeWords (not an official upstream release).
+
+          - Android package: cc.typewords.android
+          - versionName: 1.9.3
+          - versionCode: 23
+          - Minimum Android: 6.0
+          - Preserves the existing FSRS-6 scheduler, review history, IndexedDB learning data and ZIP backup format.
+          - Fixes FSRS settings changes not taking effect until the scheduler was recreated.
+          - Hardens PWA offline caching: no API/auth/deep-navigation HTML caching, 400-item static cache cap, offline shell fallback.
+          - Corresponding modified GPL-3.0 source archive and SHA-256 files are attached.
+
+          APK SHA-256: b89fa39175698022c2a0277b9843a0598859766c38e66c445080d68beb12c5b8
+          Source ZIP SHA-256: cec2bf75c501ebba74e88e2c17e2cc47abb132ae09d9df7ae214128e509b75fc
+
+          Upgrade safely: export and verify an in-app ZIP backup before installing over an existing version. In-place update requires the same package name and signing certificate. Never uninstall the old app to troubleshoot a signature mismatch.
+          EOF
+
+      - name: Refuse accidental overwrite
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v1.9.3 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release v1.9.3 already exists; refusing to overwrite any existing release or asset."
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin refs/tags/v1.9.3 >/dev/null 2>&1; then
+            echo "Tag v1.9.3 already exists; refusing to overwrite it."
+            exit 1
+          fi
+
+      - name: Create public GitHub Release and upload verified assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create v1.9.3 \
+            TypeWords-Android-v1.9.3.apk \
+            TypeWords-Android-v1.9.3.apk.sha256 \
+            TypeWords-Android-v1.9.3-source.zip \
+            TypeWords-Android-v1.9.3-source.zip.sha256 \
+            --repo "$GITHUB_REPOSITORY" \
+            --target main \
+            --title "TypeWords Android v1.9.3" \
+            --notes-file release-notes.md \
+            --latest
+
+      - name: Verify release assets and public download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view v1.9.3 --repo "$GITHUB_REPOSITORY" --json url,tagName,isLatest,assets
+          for asset in \
+            TypeWords-Android-v1.9.3.apk \
+            TypeWords-Android-v1.9.3.apk.sha256 \
+            TypeWords-Android-v1.9.3-source.zip \
+            TypeWords-Android-v1.9.3-source.zip.sha256; do
+            gh release download v1.9.3 --repo "$GITHUB_REPOSITORY" --pattern "$asset" --dir downloaded
+          done
+          (cd downloaded && sha256sum --check TypeWords-Android-v1.9.3.apk.sha256)
+          (cd downloaded && sha256sum --check TypeWords-Android-v1.9.3-source.zip.sha256)
