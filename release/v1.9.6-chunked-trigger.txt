@@ -1,0 +1,1 @@
+Trigger the resumable, range-verified TypeWords Android v1.9.6 release publisher. This workflow downloads APK and GPL source in 1 MiB byte ranges, validates every Content-Range, file size, SHA-256 and ZIP integrity, then creates the public GitHub Release if the tag does not already exist.
