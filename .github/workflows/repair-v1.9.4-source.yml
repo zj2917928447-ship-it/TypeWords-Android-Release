@@ -31,6 +31,7 @@ jobs:
       - name: Upload replacement assets before touching the existing assets
         env:
           GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA256: 4932e58285764a0819f42ec2af774d9e274f57c60feaaf0db2b28c60f7a2d91d
         run: |
           set -euo pipefail
           gh release upload v1.9.4 \
@@ -45,9 +46,6 @@ jobs:
           test -n "$NEW_ZIP_ID" && test -n "$NEW_SHA_ID"
           test "$NEW_DIGEST" = "sha256:$EXPECTED_SHA256"
           test "$NEW_SIZE" = "31912978"
-        env:
-          GH_TOKEN: ${{ github.token }}
-          EXPECTED_SHA256: 4932e58285764a0819f42ec2af774d9e274f57c60feaaf0db2b28c60f7a2d91d
 
       - name: Replace stale source assets only after the new archive is verified
         env:
