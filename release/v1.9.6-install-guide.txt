@@ -1,0 +1,56 @@
+TypeWords Android v1.9.6
+手机安装与升级说明
+
+应用名称：TypeWords
+Android 包名：cc.typewords.android
+版本：1.9.6（versionCode 26）
+最低系统：Android 6.0
+
+一、下载
+GitHub 正式 APK：
+https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/latest/download/TypeWords-Android.apk
+
+指定版本 APK：
+https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/latest/download/TypeWords-Android-v1.9.6.apk
+
+完整 GPL-3.0 源码：
+https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/latest/download/TypeWords-Android-source.zip
+
+发布页：
+https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/latest
+
+二、首次安装
+1. 下载 APK。
+2. 在手机文件管理器中打开 APK。
+3. 按 Android 提示允许本次安装来源并继续安装。
+4. 首次启动进入单词学习工作区。
+
+三、从旧版覆盖升级（重要）
+1. 先在旧版导出完整 ZIP 学习数据备份。
+2. 确认备份文件已保存，最好复制到手机以外的位置。
+3. 下载 v1.9.6 APK。
+4. 直接覆盖安装，不要先卸载旧版。
+5. 如果 Android 报告签名不一致，立即停止；不要卸载旧版或清除数据。
+6. 更新后检查词书、学习进度和设置。
+
+本版沿用包名 cc.typewords.android 和 v1.9.5 相同的签名证书。覆盖安装要求签名一致。
+
+四、v1.9.6 修订
+- 修复 Android 软键盘只发送 InputEvent、不发送可用 keydown 时的输入兼容。
+- 修复 keydown/input 去重后隐藏输入框哨兵未复位的问题。
+- 支持软键盘退格与回车事件。
+- 拒绝多字符粘贴、整词自动纠错和中文 IME 合成提交，避免产生伪键位错误。
+- 不改变 FSRS-6、历史复习计划和 ZIP 学习数据备份格式。
+
+五、数据与隐私
+- 键位分析只保存聚合计数与相邻字母组合耗时，不保存逐键原始输入序列。
+- 不新增独立遥测服务。
+- 若启用了应用原有云同步，学习数据按原设置同步。
+- 卸载应用可能删除本地数据；升级前请先导出 ZIP 备份。
+
+六、问题排查
+- 无法安装：确认 Android 版本不低于 6.0，并检查存储空间。
+- 签名冲突：停止安装，不要卸载旧版。
+- 下载中断：重新下载并校验 SHA-256。
+- 输入法不响应：切换英文键盘并重新聚焦输入框。
+- 恢复备份前先导出当前数据，避免误覆盖。
