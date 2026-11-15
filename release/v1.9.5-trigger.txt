@@ -1,0 +1,1 @@
+Trigger the verified TypeWords Android v1.9.5 public release workflow. The workflow downloads only the SHA-256-pinned APK and corresponding GPL source from the active TypeWords Quick Tunnel, validates byte ranges and archive integrity, then creates the immutable v1.9.5 release.
