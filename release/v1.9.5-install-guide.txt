@@ -1,0 +1,71 @@
+TypeWords Android v1.9.5
+手机安装与升级说明
+
+应用名称：TypeWords
+Android 包名：cc.typewords.android
+版本：1.9.5（versionCode 25）
+最低系统：Android 6.0
+版本性质：基于 TypeWords 的独立 GPL-3.0 Android 改编版，并非上游作者官方 Android 发行版。
+
+一、下载
+
+GitHub 长期下载入口（发布完成后生效）：
+https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/latest/download/TypeWords-Android-v1.9.5.apk
+
+GitHub 发布页：
+https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/latest
+
+SHA-256：
+https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/latest/download/TypeWords-Android-v1.9.5.apk.sha256
+
+对应 GPL-3.0 源码：
+https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/latest/download/TypeWords-Android-v1.9.5-source.zip
+
+注意：以上 latest 链接会在 v1.9.5 正式 Release 发布后指向本版；如果发布页仍显示 v1.9.4，请不要把它当作 v1.9.5。
+
+二、首次安装
+
+1. 下载 TypeWords-Android.apk。
+2. 在手机文件管理器中找到 APK 并打开。
+3. 按 Android 提示允许本次安装来源，然后继续安装。
+4. 首次启动进入单词学习工作区。
+5. 学习进度保存在应用私有存储中；换手机前请先导出 ZIP 备份。
+
+三、从旧版覆盖升级（重要）
+
+1. 打开旧版 TypeWords。
+2. 进入设置/数据备份，导出完整 ZIP 学习数据备份。
+3. 确认 ZIP 文件已保存，最好复制到手机以外的位置。
+4. 下载 v1.9.5 APK。
+5. 直接安装新版，选择“更新/安装”，不要先卸载旧版。
+6. 如果 Android 报告签名不一致，立即停止。不要卸载旧版，不要清除应用数据；先保留旧版并联系开发者检查签名。
+7. 更新完成后打开应用，确认词书、学习进度和设置正常。
+8. 如有需要，在新版中通过 ZIP 备份恢复功能导入备份。
+
+本版沿用包名 cc.typewords.android 和此前发布使用的签名证书。Android 覆盖安装要求签名一致；若设备提示签名冲突，不要通过卸载旧版来“解决”，因为卸载可能清除本地学习数据。
+
+四、v1.9.5 新增
+
+- 真实击键准确率统计和 QWERTY 键位热力图。
+- 薄弱字母与慢速字母组合分析。
+- 根据已学习词汇生成薄弱项专项训练。
+- 键入错误统计与 FSRS-6 复习评分分离，不因单次击键错误直接改变复习间隔。
+- 保留旧学习数据、词书和 ZIP 备份格式。
+
+五、隐私与数据
+
+- 键位分析只保存按键聚合计数和相邻字母组合耗时，不保存逐键原始时间序列。
+- 不接入独立分析/遥测服务；键位统计作为现有学习数据中的可选字段保存。若启用了应用原有云同步，它会随学习数据一起同步。
+- 点按自测不伪造击键统计。
+- 学习数据保存在 Android 应用私有存储；若启用应用原有云同步，会按原有同步设置同步。卸载应用可能删除本地数据。
+- 强烈建议升级前导出 ZIP 备份。
+
+六、问题排查
+
+- 无法安装：确认 Android 版本不低于 6.0，检查剩余空间。
+- 覆盖安装提示签名冲突：停止安装；不要卸载旧版或清除数据。
+- 下载中断：重新下载，并核对 SHA-256。
+- 启动后空白：先关闭应用再重新打开；不要清除应用数据。仍异常时提供手机型号、Android/HyperOS 版本和截图。
+- 恢复备份前：先保留当前数据的 ZIP 备份，避免误覆盖。
+
+对应源码、构建方式和许可证说明见 GitHub Release 附件中的 TypeWords-Android-v1.9.5-source.zip。
