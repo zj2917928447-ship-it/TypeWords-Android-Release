@@ -1,0 +1,180 @@
+name: Publish TypeWords Android v1.9.7 (verified resumable upload)
+
+on:
+  workflow_dispatch:
+    inputs:
+      download_base:
+        description: "Live HTTPS base URL for the TypeWords local download server (for example https://xxxx.trycloudflare.com)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: typewords-v1.9.7-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout release metadata
+        uses: actions/checkout@v4
+
+      - name: Validate URL, version and checksums
+        id: metadata
+        env:
+          DOWNLOAD_BASE: ${{ inputs.download_base }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from urllib.parse import urlparse
+          value = os.environ["DOWNLOAD_BASE"].strip().rstrip("/")
+          parsed = urlparse(value)
+          if parsed.scheme != "https" or not parsed.netloc or parsed.path not in ("", "/") or parsed.query or parsed.fragment:
+              raise SystemExit("download_base must be a bare HTTPS origin")
+          if not (parsed.hostname or "").endswith(".trycloudflare.com"):
+              raise SystemExit("Only the TypeWords HTTPS Quick Tunnel hostname is accepted")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write("download_base=" + value + "\\n")
+          PY
+
+          curl --fail --silent --show-error --location --retry 8 --retry-all-errors --retry-delay 2 "$DOWNLOAD_BASE/health" -o health.txt
+          grep -Fxq 'OK TypeWords 1.9.7' health.txt
+
+          curl --fail --silent --show-error --location "$DOWNLOAD_BASE/sha256" -o TypeWords-Android-v1.9.7.apk.sha256
+          curl --fail --silent --show-error --location "$DOWNLOAD_BASE/source-sha256" -o TypeWords-Android-v1.9.7-source.zip.sha256
+
+          APK_SHA="$(awk '{print tolower($1)}' TypeWords-Android-v1.9.7.apk.sha256)"
+          SOURCE_SHA="$(awk '{print tolower($1)}' TypeWords-Android-v1.9.7-source.zip.sha256)"
+          [[ "$APK_SHA" == "aac08c890ca6463a537202beb0359657e5d952aa19064b21cba46d0b43c26e6a" ]]
+          [[ "$SOURCE_SHA" =~ ^[a-f0-9]{64}$ ]]
+
+          APK_SIZE="$(curl --fail --silent --show-error --location --head "$DOWNLOAD_BASE/download" | tr -d '\\r' | awk 'tolower($1)=="content-length:" {v=$2} END {print v}')"
+          SOURCE_SIZE="$(curl --fail --silent --show-error --location --head "$DOWNLOAD_BASE/source" | tr -d '\\r' | awk 'tolower($1)=="content-length:" {v=$2} END {print v}')"
+          [[ "$APK_SIZE" =~ ^[0-9]+$ && "$SOURCE_SIZE" =~ ^[0-9]+$ ]]
+          [[ "$APK_SIZE" -gt 1000000 && "$SOURCE_SIZE" -gt 1000000 ]]
+
+          {
+            echo "apk_sha=$APK_SHA"
+            echo "source_sha=$SOURCE_SHA"
+            echo "apk_size=$APK_SIZE"
+            echo "source_size=$SOURCE_SIZE"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Download APK and GPL source in verified byte ranges
+        env:
+          DOWNLOAD_BASE: ${{ steps.metadata.outputs.download_base }}
+          APK_SIZE: ${{ steps.metadata.outputs.apk_size }}
+          SOURCE_SIZE: ${{ steps.metadata.outputs.source_size }}
+        run: |
+          set -euo pipefail
+
+          download_ranges() {
+            local endpoint="$1"
+            local output="$2"
+            local total="$3"
+            local chunk=1048576
+            local start=0 end length attempt ok
+            local headers="$output.headers"
+            local part="$output.part"
+
+            : > "$output"
+            while (( start < total )); do
+              end=$((start + chunk - 1))
+              if (( end >= total )); then end=$((total - 1)); fi
+              length=$((end - start + 1))
+              ok=0
+              for attempt in 1 2 3 4 5 6 7; do
+                rm -f "$headers" "$part"
+                if curl --fail --silent --show-error --location --connect-timeout 15 --max-time 90 \\
+                    --range "$start-$end" -D "$headers" -o "$part" "$DOWNLOAD_BASE$endpoint"; then
+                  if tr -d '\\r' < "$headers" | grep -Fxiq "content-range: bytes $start-$end/$total" && \\
+                     test "$(stat -c '%s' "$part")" = "$length"; then
+                    ok=1
+                    break
+                  fi
+                fi
+                echo "Retry $attempt for $endpoint bytes $start-$end" >&2
+                sleep "$attempt"
+              done
+              if (( ok != 1 )); then
+                echo "Failed verified range $endpoint bytes $start-$end" >&2
+                exit 1
+              fi
+              cat "$part" >> "$output"
+              start=$((end + 1))
+              echo "$endpoint: $start/$total bytes ($(awk -v a="$start" -v b="$total" 'BEGIN {printf "%.1f",a*100/b}')%)"
+            done
+            rm -f "$headers" "$part"
+            test "$(stat -c '%s' "$output")" = "$total"
+          }
+
+          download_ranges /download TypeWords-Android-v1.9.7.apk "$APK_SIZE"
+          download_ranges /source TypeWords-Android-v1.9.7-source.zip "$SOURCE_SIZE"
+
+          cp TypeWords-Android-v1.9.7.apk TypeWords-Android.apk
+          cp TypeWords-Android-v1.9.7-source.zip TypeWords-Android-source.zip
+          printf '%s  %s\\n' "${{ steps.metadata.outputs.apk_sha }}" TypeWords-Android-v1.9.7.apk > TypeWords-Android-v1.9.7.apk.sha256
+          printf '%s  %s\\n' "${{ steps.metadata.outputs.source_sha }}" TypeWords-Android-v1.9.7-source.zip > TypeWords-Android-v1.9.7-source.zip.sha256
+          printf '%s  %s\\n' "${{ steps.metadata.outputs.apk_sha }}" TypeWords-Android.apk > TypeWords-Android.apk.sha256
+          printf '%s  %s\\n' "${{ steps.metadata.outputs.source_sha }}" TypeWords-Android-source.zip > TypeWords-Android-source.zip.sha256
+
+          sha256sum --check TypeWords-Android-v1.9.7.apk.sha256
+          sha256sum --check TypeWords-Android-v1.9.7-source.zip.sha256
+          sha256sum --check TypeWords-Android.apk.sha256
+          sha256sum --check TypeWords-Android-source.zip.sha256
+          unzip -tq TypeWords-Android-v1.9.7-source.zip
+          head -c 4 TypeWords-Android-v1.9.7.apk | cmp - <(printf 'PK\\003\\004')
+          head -c 4 TypeWords-Android-v1.9.7-source.zip | cmp - <(printf 'PK\\003\\004')
+
+      - name: Refuse accidental release overwrite
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v1.9.7 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release v1.9.7 already exists; refusing to overwrite."
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin refs/tags/v1.9.7 >/dev/null 2>&1; then
+            echo "Tag v1.9.7 already exists; refusing to overwrite."
+            exit 1
+          fi
+
+      - name: Create public GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create v1.9.7 \\
+            TypeWords-Android-v1.9.7.apk \\
+            TypeWords-Android-v1.9.7.apk.sha256 \\
+            TypeWords-Android.apk \\
+            TypeWords-Android.apk.sha256 \\
+            TypeWords-Android-v1.9.7-source.zip \\
+            TypeWords-Android-v1.9.7-source.zip.sha256 \\
+            TypeWords-Android-source.zip \\
+            TypeWords-Android-source.zip.sha256 \\
+            release/v1.9.7-install-guide.txt \\
+            --repo "$GITHUB_REPOSITORY" \\
+            --target main \\
+            --title "TypeWords Android v1.9.7" \\
+            --notes-file release/v1.9.7-notes.md \\
+            --latest
+
+      - name: Download published assets and verify release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p verified-release
+          for asset in TypeWords-Android-v1.9.7.apk TypeWords-Android-v1.9.7.apk.sha256 TypeWords-Android-v1.9.7-source.zip TypeWords-Android-v1.9.7-source.zip.sha256; do
+            gh release download v1.9.7 --repo "$GITHUB_REPOSITORY" --pattern "$asset" --dir verified-release
+          done
+          (cd verified-release && sha256sum --check TypeWords-Android-v1.9.7.apk.sha256)
+          (cd verified-release && sha256sum --check TypeWords-Android-v1.9.7-source.zip.sha256)
+          echo "TYPEWORDS_ANDROID_V1_9_7_PUBLIC_RELEASE_VERIFIED"
