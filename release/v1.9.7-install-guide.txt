@@ -1,0 +1,55 @@
+TypeWords Android v1.9.7
+Mobile installation and upgrade guide
+
+App: TypeWords
+Package: cc.typewords.android
+Version: 1.9.7 (versionCode 27)
+Minimum Android: 6.0
+
+1. Downloads
+Latest Android APK:
+https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/latest/download/TypeWords-Android.apk
+
+Pinned v1.9.7 APK:
+https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/download/v1.9.7/TypeWords-Android-v1.9.7.apk
+
+Complete corresponding GPL-3.0 source:
+https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/download/v1.9.7/TypeWords-Android-v1.9.7-source.zip
+
+Release page:
+https://github.com/zj2917928447-ship-it/TypeWords-Android-Release/releases/tag/v1.9.7
+
+2. First install
+- Download the APK on the Android phone.
+- Open it from the file manager.
+- Allow this installation source if Android asks.
+- Finish installation and open TypeWords.
+
+3. Upgrade from v1.9.6 (important)
+- Open the old app and export a complete ZIP learning-data backup first.
+- Copy the backup to another location if possible.
+- Download v1.9.7 and install it directly over the existing app.
+- Do not uninstall the old version and do not clear app data.
+- If Android reports a signature mismatch, stop. Do not uninstall.
+- After upgrade, check dictionaries, learning progress, settings and audio.
+
+The package name remains cc.typewords.android. The signing certificate is the same as v1.9.6, so Android can perform a normal in-place update.
+
+4. What changed
+- Android 16 / API 36 target.
+- Edge-to-edge safe areas for status/navigation bars, display cutouts and the soft keyboard.
+- Rotation and predictive-back support.
+- Themed monochrome Android launcher icon.
+- More defensive native TTS rate/volume handling and foreground lifecycle.
+
+5. Data safety
+- Export a ZIP backup before uninstalling or changing devices.
+- This release does not intentionally change FSRS-6 review history, grades, due dates or the existing ZIP backup format.
+- Uninstalling the app may remove local learning data.
+
+6. Troubleshooting
+- Install blocked: check Android version (6.0+) and free storage.
+- Signature mismatch: stop; do not uninstall the previous app.
+- Download interrupted: retry the GitHub download and verify the published SHA-256 sidecar.
+- Keyboard area obscured: switch to the system keyboard, reopen the app and try again.
+- Before restoring a backup, export the current state to avoid overwriting it.
