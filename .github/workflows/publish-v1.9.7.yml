@@ -39,7 +39,7 @@ jobs:
           if not (parsed.hostname or "").endswith(".trycloudflare.com"):
               raise SystemExit("Only the TypeWords HTTPS Quick Tunnel hostname is accepted")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
-              out.write("download_base=" + value + "\\n")
+              out.write("download_base=" + value + "\n")
           PY
 
           curl --fail --silent --show-error --location --retry 8 --retry-all-errors --retry-delay 2 "$DOWNLOAD_BASE/health" -o health.txt
@@ -53,8 +53,8 @@ jobs:
           [[ "$APK_SHA" == "aac08c890ca6463a537202beb0359657e5d952aa19064b21cba46d0b43c26e6a" ]]
           [[ "$SOURCE_SHA" =~ ^[a-f0-9]{64}$ ]]
 
-          APK_SIZE="$(curl --fail --silent --show-error --location --head "$DOWNLOAD_BASE/download" | tr -d '\\r' | awk 'tolower($1)=="content-length:" {v=$2} END {print v}')"
-          SOURCE_SIZE="$(curl --fail --silent --show-error --location --head "$DOWNLOAD_BASE/source" | tr -d '\\r' | awk 'tolower($1)=="content-length:" {v=$2} END {print v}')"
+          APK_SIZE="$(curl --fail --silent --show-error --location --head "$DOWNLOAD_BASE/download" | tr -d '\r' | awk 'tolower($1)=="content-length:" {v=$2} END {print v}')"
+          SOURCE_SIZE="$(curl --fail --silent --show-error --location --head "$DOWNLOAD_BASE/source" | tr -d '\r' | awk 'tolower($1)=="content-length:" {v=$2} END {print v}')"
           [[ "$APK_SIZE" =~ ^[0-9]+$ && "$SOURCE_SIZE" =~ ^[0-9]+$ ]]
           [[ "$APK_SIZE" -gt 1000000 && "$SOURCE_SIZE" -gt 1000000 ]]
 
@@ -90,9 +90,9 @@ jobs:
               ok=0
               for attempt in 1 2 3 4 5 6 7; do
                 rm -f "$headers" "$part"
-                if curl --fail --silent --show-error --location --connect-timeout 15 --max-time 90 \\
+                if curl --fail --silent --show-error --location --connect-timeout 15 --max-time 90 \
                     --range "$start-$end" -D "$headers" -o "$part" "$DOWNLOAD_BASE$endpoint"; then
-                  if tr -d '\\r' < "$headers" | grep -Fxiq "content-range: bytes $start-$end/$total" && \\
+                  if tr -d '\r' < "$headers" | grep -Fxiq "content-range: bytes $start-$end/$total" &&
                      test "$(stat -c '%s' "$part")" = "$length"; then
                     ok=1
                     break
@@ -118,18 +118,18 @@ jobs:
 
           cp TypeWords-Android-v1.9.7.apk TypeWords-Android.apk
           cp TypeWords-Android-v1.9.7-source.zip TypeWords-Android-source.zip
-          printf '%s  %s\\n' "${{ steps.metadata.outputs.apk_sha }}" TypeWords-Android-v1.9.7.apk > TypeWords-Android-v1.9.7.apk.sha256
-          printf '%s  %s\\n' "${{ steps.metadata.outputs.source_sha }}" TypeWords-Android-v1.9.7-source.zip > TypeWords-Android-v1.9.7-source.zip.sha256
-          printf '%s  %s\\n' "${{ steps.metadata.outputs.apk_sha }}" TypeWords-Android.apk > TypeWords-Android.apk.sha256
-          printf '%s  %s\\n' "${{ steps.metadata.outputs.source_sha }}" TypeWords-Android-source.zip > TypeWords-Android-source.zip.sha256
+          printf '%s  %s\n' "${{ steps.metadata.outputs.apk_sha }}" TypeWords-Android-v1.9.7.apk > TypeWords-Android-v1.9.7.apk.sha256
+          printf '%s  %s\n' "${{ steps.metadata.outputs.source_sha }}" TypeWords-Android-v1.9.7-source.zip > TypeWords-Android-v1.9.7-source.zip.sha256
+          printf '%s  %s\n' "${{ steps.metadata.outputs.apk_sha }}" TypeWords-Android.apk > TypeWords-Android.apk.sha256
+          printf '%s  %s\n' "${{ steps.metadata.outputs.source_sha }}" TypeWords-Android-source.zip > TypeWords-Android-source.zip.sha256
 
           sha256sum --check TypeWords-Android-v1.9.7.apk.sha256
           sha256sum --check TypeWords-Android-v1.9.7-source.zip.sha256
           sha256sum --check TypeWords-Android.apk.sha256
           sha256sum --check TypeWords-Android-source.zip.sha256
           unzip -tq TypeWords-Android-v1.9.7-source.zip
-          head -c 4 TypeWords-Android-v1.9.7.apk | cmp - <(printf 'PK\\003\\004')
-          head -c 4 TypeWords-Android-v1.9.7-source.zip | cmp - <(printf 'PK\\003\\004')
+          head -c 4 TypeWords-Android-v1.9.7.apk | cmp - <(printf 'PK\003\004')
+          head -c 4 TypeWords-Android-v1.9.7-source.zip | cmp - <(printf 'PK\003\004')
 
       - name: Refuse accidental release overwrite
         env:
@@ -150,20 +150,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh release create v1.9.7 \\
-            TypeWords-Android-v1.9.7.apk \\
-            TypeWords-Android-v1.9.7.apk.sha256 \\
-            TypeWords-Android.apk \\
-            TypeWords-Android.apk.sha256 \\
-            TypeWords-Android-v1.9.7-source.zip \\
-            TypeWords-Android-v1.9.7-source.zip.sha256 \\
-            TypeWords-Android-source.zip \\
-            TypeWords-Android-source.zip.sha256 \\
-            release/v1.9.7-install-guide.txt \\
-            --repo "$GITHUB_REPOSITORY" \\
-            --target main \\
-            --title "TypeWords Android v1.9.7" \\
-            --notes-file release/v1.9.7-notes.md \\
+          gh release create v1.9.7 \
+            TypeWords-Android-v1.9.7.apk \
+            TypeWords-Android-v1.9.7.apk.sha256 \
+            TypeWords-Android.apk \
+            TypeWords-Android.apk.sha256 \
+            TypeWords-Android-v1.9.7-source.zip \
+            TypeWords-Android-v1.9.7-source.zip.sha256 \
+            TypeWords-Android-source.zip \
+            TypeWords-Android-source.zip.sha256 \
+            release/v1.9.7-install-guide.txt \
+            --repo "$GITHUB_REPOSITORY" \
+            --target main \
+            --title "TypeWords Android v1.9.7" \
+            --notes-file release/v1.9.7-notes.md \
             --latest
 
       - name: Download published assets and verify release
